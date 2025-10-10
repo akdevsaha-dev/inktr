@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"github.com/akdevsaha-dev/inktr-backend/models"
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -13,10 +12,6 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() error {
-
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		return fmt.Errorf("environment variable DATABASE_URL not set")
