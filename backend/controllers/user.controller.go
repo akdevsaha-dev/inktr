@@ -111,3 +111,10 @@ func Singin(c *fiber.Ctx) error {
 		"token": tokenString,
 	})
 }
+
+func Signout(c *fiber.Ctx) error {
+	c.ClearCookie("token")
+	return c.JSON(fiber.Map{
+		"error": "Signed out successfully",
+	})
+}
