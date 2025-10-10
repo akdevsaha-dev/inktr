@@ -54,6 +54,14 @@ func Signup(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "failed to create token"})
 	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		HTTPOnly: true,
+		Expires:  time.Now().Add(30 * 24 * time.Hour),
+		Secure:   os.Getenv("APP_ENV") == "production",
+		SameSite: "strict",
+	})
 	return c.JSON(fiber.Map{
 		"message": "Signup successful",
 		"token":   tokenString,
@@ -80,7 +88,7 @@ func Singin(c *fiber.Ctx) error {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"user_Id": existingUser.ID,
+			"user_id": existingUser.ID,
 			"exp":     time.Now().Add(time.Hour * 24).Unix(),
 		},
 	)
@@ -91,6 +99,14 @@ func Singin(c *fiber.Ctx) error {
 			"error": "Failed to create token",
 		})
 	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Expires:  time.Now().Add(30 * 24 * time.Hour),
+		HTTPOnly: true,
+		Secure:   os.Getenv("APP_ENV") == "production",
+		SameSite: "strict",
+	})
 	return c.JSON(fiber.Map{"message": "signin successful",
 		"token": tokenString,
 	})
