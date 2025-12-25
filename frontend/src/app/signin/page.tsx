@@ -1,7 +1,7 @@
 "use client";
 import { InputBox } from "@/components/InputBox";
 import { useAuthStore } from "@/store/authStore";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -11,11 +11,12 @@ export default function Page() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [agree, setAgree] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const signin = useAuthStore((state) => state.signin);
+  const loading = useAuthStore((state) => state.isSigningIn);
   const handleSubmit = async () => {
     if (!email || !password) {
       toast.error("All fields required");
@@ -25,7 +26,6 @@ export default function Page() {
     if (success) {
       router.push("/blogs");
     }
-    toast.error("Error signing in");
   };
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center">
@@ -48,21 +48,28 @@ export default function Page() {
               }
             }}
           />
-          <InputBox
-            ref={passwordRef}
-            value={password}
-            label="Password"
-            type="password"
-            placeholder="••••••• •••••• •••••"
-            onChange={(e: any) => {
-              setPassword(e.target.value);
-            }}
-            onKeyDown={(e: any) => {
-              if (e.key === "Enter") {
-                //   submitHandler();
-              }
-            }}
-          />
+          <div className="relative">
+            <InputBox
+              ref={passwordRef}
+              value={password}
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••• •••••• •••••"
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+              className="pr-10"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-[74px] text-zinc-400 hover:text-zinc-200"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
 
           <div className="mt-5 flex w-full items-center gap-4">
             <input
@@ -79,8 +86,13 @@ export default function Page() {
               "mt-6 flex h-10 w-full items-center justify-center gap-2 border-[1px] bg-cyan-300 text-center text-sm font-semibold text-neutral-700 hover:bg-cyan-200"
             }
           >
-            Continue
-            <ChevronRight size={15} />
+            {loading ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <div className="flex items-center">
+                Continue <ChevronRight size={15} />
+              </div>
+            )}
           </button>
         </div>
 

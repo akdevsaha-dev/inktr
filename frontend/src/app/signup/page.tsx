@@ -2,7 +2,7 @@
 
 import { InputBox } from "@/components/InputBox";
 import { useAuthStore } from "@/store/authStore";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -14,11 +14,13 @@ export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [agree, setAgree] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const signup = useAuthStore((state) => state.signup);
+  const loading = useAuthStore((state) => state.isSigningUp);
   const handleSubmit = async () => {
-    if (!username || !username || !password) {
+    if (!username || !email || !password) {
       toast.error("All fields are required.");
       return;
     }
@@ -26,6 +28,7 @@ export default function Page() {
 
     if (success) {
       router.push("/blogs");
+      return;
     }
     toast.error("Error signing up");
   };
@@ -65,20 +68,29 @@ export default function Page() {
                 }
               }}
             />
-            <InputBox
-              ref={passwordRef}
-              value={password}
-              label="Password"
-              type="password"
-              placeholder="••••••• •••••• •••••"
-              onChange={(e) => {
-                setPassword(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                }
-              }}
-            />
+
+            <div className="relative">
+              <InputBox
+                ref={passwordRef}
+                value={password}
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••• •••••• •••••"
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSubmit();
+                }}
+                className="pr-10"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-[74px] text-zinc-400 hover:text-zinc-200"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
 
             <div className="mt-5 flex w-full items-center gap-4">
               <input
@@ -86,7 +98,6 @@ export default function Page() {
                 type="checkbox"
                 checked={agree}
                 onChange={(e) => setAgree(e.target.checked)}
-                onClick={handleSubmit}
               />
               <label className="text-sm font-light text-white">
                 I agree to the{" "}
@@ -109,8 +120,13 @@ export default function Page() {
                   : "cursor-not-allowed border-cyan-300 bg-[#b0e4ed]"
               }`}
             >
-              Continue
-              <ChevronRight size={15} />
+              {loading ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <div className="flex items-center">
+                  Continue <ChevronRight size={15} />
+                </div>
+              )}
             </button>
           </div>
 
