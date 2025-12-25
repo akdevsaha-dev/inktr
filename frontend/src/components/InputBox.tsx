@@ -7,16 +7,22 @@ interface InputBoxProps {
   onChange: React.ChangeEventHandler<HTMLInputElement>;
   onKeyDown: React.KeyboardEventHandler<HTMLInputElement>;
   type: React.HTMLInputTypeAttribute;
+  className?: string;
 }
 
 export const InputBox = forwardRef<HTMLInputElement, InputBoxProps>(
-  ({ label, placeholder, value, onChange, onKeyDown, type }, ref) => {
+  (
+    { label, placeholder, value, onChange, onKeyDown, type, className },
+    ref
+  ) => {
     return (
       <div className="mt-8 h-full w-full">
         <div className="font-sans text-xs">{label}</div>
         <input
           ref={ref}
-          className="mt-4 w-full border-[1px] border-neutral-700 px-4 py-2 text-sm font-light text-neutral-400 focus:border-[1px] focus:border-blue-300 focus:outline-none"
+          className={`mt-4 w-full border-[1px] border-neutral-700 px-4 py-2 text-sm font-light text-neutral-400 focus:border-[1px] focus:border-blue-300 focus:outline-none ${
+            className ?? ""
+          }`}
           type={type}
           placeholder={placeholder}
           onChange={onChange}
