@@ -10,7 +10,6 @@ import (
 var jwtSecret = []byte(os.Getenv("SECRET_KEY"))
 
 func AuthMiddleware(c *fiber.Ctx) error {
-
 	tokenString := c.Cookies("token")
 
 	if tokenString == "" {
@@ -32,4 +31,3 @@ func AuthMiddleware(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "cannot read claims"})
 	}
 }
- 
