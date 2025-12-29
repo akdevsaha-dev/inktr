@@ -8,6 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type PostResponse struct {
+	models.Post
+	TotalLikes int `json:"total_likes"`
+}
+
 func CreatePost(c *fiber.Ctx) error {
 
 	user_id, err := helpers.GetUserId(c)
@@ -98,22 +103,77 @@ func GetPosts(c *fiber.Ctx) error {
 		}).
 		Preload("Comments").
 		Preload("Categories").
-		Preload("LikedBy").
 		Find(&posts).Error
 
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Cannot load posts at the moment."})
 	}
 
-	return c.Status(200).JSON(fiber.Map{"posts": posts})
+	response := make([]PostResponse, 0, len(posts))
+
+	for _, post := range posts {
+		totalLikes := config.DB.Model(&post).Association("LikedBy").Count()
+		response = append(response, PostResponse{
+			Post:       post,
+			TotalLikes: int(totalLikes),
+		})
+	}
+
+	return c.JSON(fiber.Map{"posts": response})
 }
 func GetApost(c *fiber.Ctx) error {
 	postId := c.Params("id")
 
 	var post models.Post
-
-	if err := config.DB.Where("ID = ?", postId).First(&post).Error; err != nil {
+	if err := config.DB.Preload("Author").Where("id = ?", postId).First(&post).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Error loading post..."})
 	}
-	return c.Status(200).JSON(fiber.Map{"post": post})
+	totalLikes := config.DB.
+		Model(&post).
+		Association("LikedBy").
+		Count()
+	userID, err := helpers.GetUserId(c)
+	liked := false
+	if err == nil {
+		var user models.User
+		if err := config.DB.First(&user, userID).Error; err == nil {
+			var likedPosts []models.Post
+			config.DB.Model(&user).Association("LikedPosts").Find(&likedPosts, "id = ?", post.ID)
+			liked = len(likedPosts) > 0
+		}
+	}
+
+	return c.Status(200).JSON(fiber.Map{"post": post, "total_likes": totalLikes, "liked": liked})
+}
+
+func UpdateLike(c *fiber.Ctx) error {
+	user_id, err := helpers.GetUserId(c)
+	postId := c.Params("id")
+
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
+	}
+	var user models.User
+	if err := config.DB.First(&user, user_id).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "User not founf"})
+	}
+	var post models.Post
+	if err := config.DB.First(&post, postId).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "post not found"})
+	}
+	var likedPost []models.Post
+	config.DB.Model(&user).Association("LikedPosts").Find(&likedPost, "id = ?", postId)
+	liked := len(likedPost) > 0
+	if liked {
+		config.DB.Model(&user).Association("LikedPosts").Delete(&post)
+		liked = false
+	} else {
+		config.DB.Model(&user).Association("LikedPosts").Append(&post)
+		liked = true
+	}
+
+	totalLikes := config.DB.Model(&post).Association("LikedBy").Count()
+	return c.Status(200).JSON(fiber.Map{
+		"liked":       liked,
+		"total_likes": totalLikes})
 }
