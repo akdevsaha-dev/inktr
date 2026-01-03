@@ -41,7 +41,7 @@ export const Hero = () => {
     );
   };
 
-  const text = "Where ideas find form, and stories find their audience.";
+  const text = "Where ideas take form, and stories find their audience.";
   const [displayedText, setDisplayedText] = useState("");
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export const Hero = () => {
       setDisplayedText(text.slice(0, i));
       i++;
       if (i > text.length) clearInterval(interval);
-    }, 50);
+    }, 40);
 
     return () => clearInterval(interval);
   }, []);
@@ -58,7 +58,7 @@ export const Hero = () => {
   return (
     <div className="h-screen bg-[url('/hero.jpg')] bg-cover flex flex-col">
       <Navbar />
-      <motion.div className="text-5xl absolute font-sans font-bold top-80 left-28">
+      <motion.div className="md:text-5xl text-4xl absolute font-sans font-bold top-80 left-7 md:left-24">
         <motion.div
           initial={{ opacity: 0, y: -200, scale: 0.6, filter: "blur(30px)" }}
           animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
@@ -92,7 +92,7 @@ export const Hero = () => {
         </motion.div>
       </motion.div>
       <motion.div
-        className="absolute left-32 bottom-60 text-lg text-white/60 font-sans"
+        className="absolute left-9 md:left-28 bottom-60 text-lg text-white/60 font-sans"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
@@ -103,7 +103,7 @@ export const Hero = () => {
           transition={{ repeat: Infinity, duration: 1 }}
           className="ml-1"
         >
-          |
+
         </motion.span>
       </motion.div>
       <div className=" absolute font-semibold text-white/60 left-30 bottom-40 px-2 py-2 rounded-full bg-white/10 hover:bg-white/5  w-[170px]  text-center">

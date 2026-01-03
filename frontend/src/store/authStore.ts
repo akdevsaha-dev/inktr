@@ -1,19 +1,21 @@
 import { axiosInstance } from "@/lib/axios"
+import axios from "axios"
 import toast from "react-hot-toast"
 import { create } from "zustand"
 
-type user = {
+export type User = {
     id: number,
     username: string,
     email: string,
     created_at: string
+    avatar_url?: string
 }
 
 type authStore = {
-    user: user | null
+    user: User | null
     isSigningUp: boolean
     isCheckingAuth: boolean
-    checkAuth: () => void
+    checkAuth: () => Promise<void>
     isSigningIn: boolean
     signup: (data: { username: string; email: string; password: string }) => Promise<boolean>
     signin: (data: { email: string, password: string }) => Promise<boolean>
@@ -24,16 +26,13 @@ export const useAuthStore = create<authStore>((set) => ({
     user: null,
     isSigningUp: false,
     isSigningIn: false,
-    isCheckingAuth: false,
+    isCheckingAuth: true,
     checkAuth: async () => {
-        set({ isCheckingAuth: true })
         try {
             const res = await axiosInstance.get("/user/status")
             set({ user: res.data.user })
         } catch (error) {
             set({ user: null })
-            console.log(error)
-            toast.error("Errer checking auth.")
         } finally {
             set({ isCheckingAuth: false })
         }
@@ -41,8 +40,8 @@ export const useAuthStore = create<authStore>((set) => ({
     signup: async (data: { username: string; email: string; password: string }) => {
         set({ isSigningUp: true })
         try {
-            const res = await axiosInstance.post("/user/signup", data)
-            set({ user: res.data.user })
+            await axiosInstance.post("/user/signup", data)
+            await useAuthStore.getState().checkAuth()
             return true;
         } catch (error) {
             console.log(error)
@@ -55,19 +54,15 @@ export const useAuthStore = create<authStore>((set) => ({
     signin: async (data: { email: string; password: string }) => {
         set({ isSigningIn: true })
         try {
-            const res = await axiosInstance.post("/user/signin", data)
-            set({ user: res.data.user })
+            await axiosInstance.post("/user/signin", data)
+            await useAuthStore.getState().checkAuth()
             return true;
-        } catch (error: any) {
-            if (error.response) {
-                console.log("Backend error:", error.response.data.error);
-                toast.error(error.response.data.error);
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                toast.error(error.response?.data?.error ?? "Login failed");
             } else {
-                console.log("Network or CORS issue:", error.message);
-                toast.error("Network error. Please try again.");
+                toast.error("Unexpected error occurred");
             }
-            console.log(error)
-            toast.error("Error signing up.")
             return false;
         } finally {
             set({ isSigningIn: false })
