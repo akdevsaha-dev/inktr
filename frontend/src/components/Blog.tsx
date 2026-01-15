@@ -7,6 +7,9 @@ import Image from "next/image";
 import { getReadingTime } from "@/utils/readingTime";
 import { getFormattedDate } from "@/utils/formatDate";
 import { Dot, Heart } from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Highlight from "@tiptap/extension-highlight";
 
 export const Blog = ({ post_id }: { post_id: number }) => {
   const liked = usePostStore((state) => state.liked);
@@ -18,9 +21,31 @@ export const Blog = ({ post_id }: { post_id: number }) => {
   );
   const fetchSinglePost = usePostStore((state) => state.fetchSinglePost);
   const likeCount = usePostStore((state) => state.total_likes);
+
+  const editor = useEditor({
+    extensions: [StarterKit, Highlight],
+    editable: false,
+    immediatelyRender: false,
+    content: post?.content ?? "", // Initialize with post content if available
+    injectCSS: true, // Ensure default styling is applied
+    editorProps: {
+      attributes: {
+        class: "prose prose-invert prose-lg max-w-none",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (editor && post?.content) {
+      // Only set content if editor exists and content has changed
+      editor.commands.setContent(post.content);
+    }
+  }, [editor, post?.content]);
+
   useEffect(() => {
     fetchSinglePost({ post_id });
   }, [post_id, fetchSinglePost]);
+
   if (isFetchingSinglePost)
     return (
       <motion.div
@@ -31,9 +56,12 @@ export const Blog = ({ post_id }: { post_id: number }) => {
         Loading
       </motion.div>
     );
+
   if (!post) return null;
+
   const readTime = getReadingTime(post.content);
   const time = getFormattedDate(post.created_at);
+
   return (
     <div className="min-h-screen">
       <LogNav />
@@ -72,8 +100,12 @@ export const Blog = ({ post_id }: { post_id: number }) => {
             <div className="pl-3  text-neutral-400">{likeCount}</div>
           </div>
 
-          <div className="font-serif text-xl font-thin mt-16">
-            {post.content}
+          <div className="prose prose-invert prose-lg max-w-none mt-16">
+            {editor && post?.content ? (
+              <EditorContent editor={editor} />
+            ) : (
+              <div className="text-neutral-500">Loading content…</div>
+            )}
           </div>
         </div>
       </div>

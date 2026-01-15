@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 
 export const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -9,20 +10,28 @@ export const Navbar = () => {
   return (
     <nav className="w-full sticky top-0 z-50  ">
       <div className="flex items-center justify-between px-6 md:px-28 h-16">
-
-        <div className="font-sans text-2xl md:text-3xl font-bold">
-          Inktr
-        </div>
+        <div className="font-sans text-2xl md:text-3xl font-bold">Inktr</div>
 
         <div className="hidden lg:flex items-center gap-14 text-sm text-white">
-          <div className="hover:text-white/45 cursor-pointer">Our story</div>
-          <div className="hover:text-white/45 cursor-pointer">Membership</div>
-          <div className="hover:text-white/45 cursor-pointer">Write</div>
-          <div className="hover:text-white/45 cursor-pointer">Sign in</div>
+          <Link href={""} className="hover:text-white/45 cursor-pointer">
+            Our story
+          </Link>
+          <Link href={""} className="hover:text-white/45 cursor-pointer">
+            Membership
+          </Link>
+          <Link href={""} className="hover:text-white/45 cursor-pointer">
+            Write
+          </Link>
+          <Link href={"/signin"} className="hover:text-white/45 cursor-pointer">
+            Sign in
+          </Link>
 
-          <div className="px-6 h-7 bg-white/15 transition hover:bg-white/45 hover:text-black/70 rounded-full flex items-center cursor-pointer">
+          <Link
+            href={"/signup"}
+            className="px-6 h-7 bg-white/15 transition hover:bg-white/45 hover:text-black/70 rounded-full flex items-center cursor-pointer"
+          >
             Get Started
-          </div>
+          </Link>
         </div>
 
         <div className="lg:hidden flex items-center gap-4">
@@ -30,10 +39,7 @@ export const Navbar = () => {
             Get Started
           </div>
 
-          <button
-            onClick={() => setOpen(!open)}
-            className="text-white"
-          >
+          <button onClick={() => setOpen(!open)} className="text-white">
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>

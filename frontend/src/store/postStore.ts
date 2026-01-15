@@ -4,11 +4,12 @@ import { axiosInstance } from "@/lib/axios"
 import toast from "react-hot-toast"
 import { AxiosError } from "axios"
 import { createJSONStorage, persist } from "zustand/middleware"
+import type { JSONContent } from "@tiptap/core";
 
 type Post = {
     id: number
     title: string
-    content: string
+    content: JSONContent
     subtitle?: string
     created_at: string
     user_id: number
@@ -79,20 +80,31 @@ export const usePostStore = create<PostStore>()(persist(
             }
         },
         fetchSinglePost: async ({ post_id }: { post_id: number }) => {
-            set({ isFetchingSinglePost: true })
+            set({ isFetchingSinglePost: true });
             try {
-                const res = await axiosInstance.get(`/post/${post_id}`)
-                set({ post: res.data.post, total_likes: res.data.total_likes, liked: res.data.liked })
+                const res = await axiosInstance.get(`/post/${post_id}`);
+                const post = {
+                    ...res.data.post,
+                    content:
+                        typeof res.data.post.content === "string"
+                            ? JSON.parse(res.data.post.content)
+                            : res.data.post.content,
+                };
+                set({
+                    post,
+                    total_likes: res.data.total_likes,
+                    liked: res.data.liked,
+                });
             } catch (err: unknown) {
-                const error = err as AxiosError<any>
+                const error = err as AxiosError<any>;
                 if (error.response) {
-                    toast.error(error.response.data.error)
+                    toast.error(error.response.data.error || "Cannot load post");
                 } else {
-                    toast.error("network error")
+                    toast.error("Network error");
                 }
-                set({ post: null })
+                set({ post: null });
             } finally {
-                set({ isFetchingSinglePost: false })
+                set({ isFetchingSinglePost: false });
             }
         },
         updateLikes: async ({ post_id }: { post_id: number }) => {

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"encoding/json"
+
 	"github.com/akdevsaha-dev/inktr-backend/config"
 	"github.com/akdevsaha-dev/inktr-backend/helpers"
 	"github.com/akdevsaha-dev/inktr-backend/models"
@@ -21,9 +23,9 @@ func CreatePost(c *fiber.Ctx) error {
 	}
 
 	var data struct {
-		Title   string `json:"title"`
-		Content string `json:"content"`
-		Subtite string `json:"subtitle"`
+		Title    string          `json:"title"`
+		Content  json.RawMessage `json:"content"`
+		Subtitle string          `json:"subtitle"`
 	}
 
 	if err := c.BodyParser(&data); err != nil {
@@ -35,7 +37,7 @@ func CreatePost(c *fiber.Ctx) error {
 	post := models.Post{
 		Title:    data.Title,
 		Content:  data.Content,
-		Subtitle: data.Subtite,
+		Subtitle: data.Subtitle,
 		UserID:   uint(user_id),
 	}
 	err = config.DB.Create(&post).Error
@@ -53,8 +55,8 @@ func UpdatePost(c *fiber.Ctx) error {
 	postId := c.Params("id")
 
 	var data struct {
-		Title   *string `json:"title"`
-		Content *string `json:"content"`
+		Title   *string          `json:"title"`
+		Content *json.RawMessage `json:"content"`
 	}
 
 	if err := c.BodyParser(&data); err != nil {
@@ -123,15 +125,13 @@ func GetPosts(c *fiber.Ctx) error {
 }
 func GetApost(c *fiber.Ctx) error {
 	postId := c.Params("id")
-
 	var post models.Post
-	if err := config.DB.Preload("Author").Where("id = ?", postId).First(&post).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Error loading post..."})
+	if err := config.DB.Preload("Author").First(&post, postId).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": err.Error()})
 	}
-	totalLikes := config.DB.
-		Model(&post).
-		Association("LikedBy").
-		Count()
+
+	totalLikes := config.DB.Model(&post).Association("LikedBy").Count()
+
 	userID, err := helpers.GetUserId(c)
 	liked := false
 	if err == nil {
@@ -143,7 +143,21 @@ func GetApost(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(200).JSON(fiber.Map{"post": post, "total_likes": totalLikes, "liked": liked})
+	// Return Content as raw JSON so TipTap gets exactly the same structure
+	return c.JSON(fiber.Map{
+		"post": fiber.Map{
+			"id":         post.ID,
+			"title":      post.Title,
+			"subtitle":   post.Subtitle,
+			"content":    json.RawMessage(post.Content), // <- important: keep it as JSON object
+			"created_at": post.CreatedAt,
+			"updated_at": post.UpdatedAt,
+			"user_id":    post.UserID,
+			"author":     post.Author,
+		},
+		"total_likes": totalLikes,
+		"liked":       liked,
+	})
 }
 
 func UpdateLike(c *fiber.Ctx) error {

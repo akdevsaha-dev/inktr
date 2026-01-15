@@ -17,8 +17,10 @@ type authStore = {
     isCheckingAuth: boolean
     checkAuth: () => Promise<void>
     isSigningIn: boolean
+    isSigningOut: boolean
     signup: (data: { username: string; email: string; password: string }) => Promise<boolean>
     signin: (data: { email: string, password: string }) => Promise<boolean>
+    signout: () => Promise<void>
 }
 
 
@@ -26,6 +28,7 @@ export const useAuthStore = create<authStore>((set) => ({
     user: null,
     isSigningUp: false,
     isSigningIn: false,
+    isSigningOut: false,
     isCheckingAuth: true,
     checkAuth: async () => {
         try {
@@ -57,7 +60,7 @@ export const useAuthStore = create<authStore>((set) => ({
             await axiosInstance.post("/user/signin", data)
             await useAuthStore.getState().checkAuth()
             return true;
-        } catch (error) {
+        } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.response?.data?.error ?? "Login failed");
             } else {
@@ -67,5 +70,22 @@ export const useAuthStore = create<authStore>((set) => ({
         } finally {
             set({ isSigningIn: false })
         }
+    },
+
+    signout: async () => {
+        set({ isSigningOut: true });
+        try {
+            await axiosInstance.post("/user/signout")
+            set({ user: null })
+
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                const message = err.response?.data.error || "Something went wrong";
+                toast.error(message);
+            }
+        } finally {
+            set({ isSigningOut: false });
+        }
     }
+
 }))

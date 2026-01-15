@@ -13,6 +13,7 @@ import (
 )
 
 var jwtSecret = []byte(os.Getenv("SECRET_KEY"))
+var isProd = os.Getenv("APP_ENV") == "production"
 
 func Signup(c *fiber.Ctx) error {
 
@@ -60,8 +61,8 @@ func Signup(c *fiber.Ctx) error {
 		Value:    tokenString,
 		HTTPOnly: true,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
-		SameSite: "Lax",
-		Secure:   false,
+		SameSite: fiber.CookieSameSiteLaxMode,
+		Secure:   isProd,
 		Path:     "/",
 	})
 	return c.JSON(fiber.Map{
@@ -111,8 +112,8 @@ func Singin(c *fiber.Ctx) error {
 		Value:    tokenString,
 		Expires:  time.Now().Add(30 * 24 * time.Hour),
 		HTTPOnly: true,
-		SameSite: "Lax", //none for production
-		Secure:   false, //true
+		SameSite: fiber.CookieSameSiteLaxMode,
+		Secure:   isProd,
 		Path:     "/",
 	})
 	return c.JSON(fiber.Map{"message": "signin successful",
@@ -132,11 +133,11 @@ func Signout(c *fiber.Ctx) error {
 		Path:     "/",
 		Expires:  time.Now().Add(-time.Hour),
 		HTTPOnly: true,
-		SameSite: "Lax",
-		Secure:   false,
+		SameSite: fiber.CookieSameSiteLaxMode,
+		Secure:   isProd,
 	})
 	return c.JSON(fiber.Map{
-		"error": "Signed out successfully",
+		"message": "Signed out successfully",
 	})
 }
 
